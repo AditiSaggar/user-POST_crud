@@ -33,7 +33,7 @@ const createUser = async (req, res) => {
             })
             res.send({
                 data: user,
-                message: "User created  succesfully...",
+                message: "User created succesfully",
                 status: 200
             })
         }
@@ -88,8 +88,50 @@ const loginUser = async (req, res) => {
     }
 }
 
-//update
+//getUserById
+const getUserById = async (req, res) => {
+    const userId = req.params.id;
 
+    try {
+        const user = await UserModel.findById(userId);
+        if (user) {
+            res.status(200).json({
+                data: user,
+                message: "User found successfully",
+                status: 200
+            });
+        } else {
+            res.status(404).json({
+                status: false,
+                error: "User not found"
+            });
+        }
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            error: "Internal Server Error"
+        });
+    }
+};
+
+//getAll users
+const getAllUsers = async (req, res) => {
+    try {
+        const users = await UserModel.find();
+        res.status(200).json({
+            data: users,
+            message: "Users retrieved successfully",
+            status: 200
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            error: "Internal Server Error"
+        });
+    }
+};
+
+//update
 const updateUser = async (req, res) => {
     const userId = req.params.id;
     console.log(req.params.id)
@@ -139,6 +181,8 @@ const deleteUser = async (req, res) => {
 module.exports = {
     createUser,
     loginUser,
+    getUserById,
+    getAllUsers,
     updateUser,
     deleteUser,
 }

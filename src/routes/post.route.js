@@ -13,14 +13,18 @@ router.get('/posts', postController.getAllPosts);
 //Get post by id
 router.get('/posts/:id', postController.getPostById);
 
+router.get('/post/:id', postController.getPostByslugOrId);
+
 // Update a post by ID
 router.put('/update/:id', postController.updatePost);
 
 // Delete a post by ID
 router.delete('/delete/:id', postController.deletePost);
 
+
+
 //slug title
-router.get('/:slug', postController.createSlug);
+//router.get('/:slug', postController.createSlug);
 
 module.exports = router;
 

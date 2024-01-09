@@ -1,23 +1,24 @@
 const mongoose = require('mongoose');
-const { default: slugify } = require('slugify');
-const slugify = require('slugify');
+// const { default: slugify } = require('slugify');
+//const slugify = require('slugify');
 
 const postSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
     unique:true,
-    set:(value)=>slugify(value, { lower: true }),
+    // set:(value)=>slugify(value, { lower: true }),
+  },
+  subtitle:{
+    type: String,
+    required: true,
+    unique:true,
+
   },
   content: {
     type: String,
     required: true,
   },
-//   author: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: 'User',
-//     required: true,
-//   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -27,14 +28,22 @@ const postSchema = new mongoose.Schema({
     type: String, 
     slug: 'title',
     unique:'true'
+},
+createdAt: {
+  type: Date,
+  required: true,
+},
+updatedAt: {
+  type: Date,
+  required: true,
 }
 
 });
 
-postSchema.pre('validate', function (next) {
-    this.slug = slugify(this.title, { lower: true });
-    next();
-  });
+// postSchema.pre('validate', function (next) {
+//     this.slug = slugify(this.title, { lower: true });
+//     next();
+//   });
 
 const postModel = mongoose.model('Post', postSchema);
 

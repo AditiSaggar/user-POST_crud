@@ -1,6 +1,8 @@
 const PostModel = require('../models/post.schema');
 const UserModel = require('../models/user.schema');
-const slugify = require('slugify');
+const mongoose = require('mongoose');
+
+//const slugify = require('slugify');
 
 //create post
 const createPost = async (req, res) => {
@@ -8,9 +10,11 @@ const createPost = async (req, res) => {
     try {
 
       const savedPost = await newPost.save();
+
       res.status(201).json({
         success: true,
-        message:"posted successfully"})
+        message:"posted successfully",
+      post:savedPost})
 
        } catch (error) {
         console.error('Error creating post:', error);
@@ -23,32 +27,32 @@ const createPost = async (req, res) => {
 };
   
  //Get Post
- const readPost = async (req, res) => {
-    try {
-      const postId = req.params.id;
+//  const readPost = async (req, res) => {
+//     try {
+//       const postId = req.params.id;
       
-      // Find post by ID
-      const post = await PostModel.findById(postId);
+//       // Find post by ID
+//       const post = await PostModel.findById(postId);
   
-      if (!post) {
-        return res.status(404).json({ 
-            success: false, 
-            message: 'Post not found', 
-            error: 'Post with the provided ID does not exist' });
-      }
+//       if (!post) {
+//         return res.status(404).json({ 
+//             success: false, 
+//             message: 'Post not found', 
+//             error: 'Post with the provided ID does not exist' });
+//       }
   
-      res.status(200).json({ 
-        success: true, 
-        message: 'Post retrieved successfully', 
-        post });
-    } catch (error) {
-      console.error('Error reading post:', error);
-      res.status(500).json({ 
-        success: false, 
-        message: 'Internal Server Error', 
-        error: error.message });
-    }
-};
+//       res.status(200).json({ 
+//         success: true, 
+//         message: 'Post retrieved successfully', 
+//         post });
+//     } catch (error) {
+//       console.error('Error reading post:', error);
+//       res.status(500).json({ 
+//         success: false, 
+//         message: 'Internal Server Error', 
+//         error: error.message });
+//     }
+// };
 
 //Read All Post
 const getAllPosts = async (req, res) => {
@@ -90,6 +94,47 @@ const getPostById = async (req, res) => {
          error: error.message });
     }
 };
+
+//
+const getPostByslugOrId = async (req, res) => {
+  try {
+    const criteria = {};
+    criteria.$or = [];
+
+    const postId = req.params.postId; // Assuming the post ID is part of the request parameters.
+
+    if (mongoose.Types.ObjectId.isValid(postId)) {
+      criteria.$or.push({ _id: postId });
+    }
+
+    criteria.$or.push({ slug: postId });
+
+    const post = await PostModel.findOne(criteria);
+
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found',
+        payload: null,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Success',
+      payload: post,
+    });
+
+  } catch (error) {
+    console.error('Error fetching post:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+      error: error.message,
+    });
+  }
+};
+
 
 //Update Post
 const updatePost = async (req, res) => {
@@ -155,49 +200,46 @@ const deletePost = async (req, res) => {
     }
 };
   
- 
-// Function to create a slug and retrieve a post by slug
-const createSlug = async (req, res) => {
-    const { slug } = req.params;
+//create a slug and retrieve a post by slug
+// const createSlug = async (req, res) => {
+//     const { slug } = req.params;
 
-    // If the request contains a title, create a slug from it
-    if (req.body.title) {
-        req.body.slug = slugify(req.body.title, {
-            replacement: '-',
-            lower: true,
-            remove: /[*+~.()'"!:@]/g,
-        });
-    }
-    try {
-        // If the request has a title, create a new post with the slug
-        if (req.body.title) {
-            const newPost = new PostModel(req.body);
-            const savedPost = await newPost.save();
-            return res.status(201).json({
-                success: true,
-                message: 'Post created successfully',
-                post: savedPost,
-            });
-        }
+//     if (req.body.title) {
+//         req.body.slug = slugify(req.body.title, {
+//             replacement: '-',
+//             lower: true,
+//             remove: /[*+~.()'"!:@]/g,
+//         });
+//     }
+//     try {
+//         // If the request has a title, create a new post with the slug
+//         if (req.body.title) {
+//             const newPost = new PostModel(req.body);
+//             const savedPost = await newPost.save();
+//             return res.status(201).json({
+//                 success: true,
+//                 message: 'Post created successfully',
+//                 post: savedPost,
+//             });
+//         }
+//         const post = await PostModel.findOne({ slug }).select('-_id');
 
-        // If the request doesn't have a title, retrieve the post by slug
-        const post = await PostModel.findOne({ slug }).select('-_id');
+//         if (!post) {
+//             return res.status(404).json({ message: 'Post not found' });
+//         }
 
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
-
-        res.json(post);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
+//         res.json(post);
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
   
 module.exports = {
   createPost,
   getAllPosts,
   getPostById,
+  getPostByslugOrId,
   updatePost,
   deletePost,
-  createSlug 
+  // createSlug 
 };
