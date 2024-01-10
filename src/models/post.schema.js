@@ -7,7 +7,7 @@ const postSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique:true,
-    // set:(value)=>slugify(value, { lower: true }),
+    
   },
   subtitle:{
     type: String,
@@ -24,6 +24,7 @@ const postSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
+
   slug: { 
     type: String, 
     slug: 'title',

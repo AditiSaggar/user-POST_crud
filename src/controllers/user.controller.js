@@ -8,18 +8,20 @@ const {createUserSchema, loginUserSchema} = require("../validations/user.validat
 const createUser = async (req, res) => {
     const { error } = createUserSchema.validate(req.body);
     console.log("error", error)
+    
     if (error) {
         console.log("error", error.message)
         return res.status(400).json({
             error: error.details.map((err) => {
             
-                return err.message.replace(/"/g, '');
+                return err.message;
                 
             })
         });
     }
 
-    const { email, userName, password } = req.body
+    const {userName,email, password,role } = req.body;
+    const userRole = role || 'editor';
     try {
         let checkUser = await UserModel.findOne({ "$or": [{ email: email }, { userName: userName }] })
         console.log("checkUser",checkUser)
@@ -29,7 +31,8 @@ const createUser = async (req, res) => {
 
             const user = await UserModel.create({
                 ...req.body,
-                password: passwordHash
+                password: passwordHash,
+                role:userRole
             })
             res.send({
                 data: user,
@@ -43,6 +46,9 @@ const createUser = async (req, res) => {
     } catch (error) {
     }
 }
+
+
+
 
 // login
 const loginUser = async (req, res) => {

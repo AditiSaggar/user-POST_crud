@@ -2,6 +2,7 @@ const PostModel = require('../models/post.schema');
 const UserModel = require('../models/user.schema');
 const mongoose = require('mongoose');
 
+
 //const slugify = require('slugify');
 
 //create post
@@ -56,21 +57,41 @@ const createPost = async (req, res) => {
 
 //Read All Post
 const getAllPosts = async (req, res) => {
-    try {
-      // Retrieve all posts
-      const posts = await PostModel.find();
-  
-      res.status(200).json({ success: true, message: 'All posts retrieved successfully', posts });
-    } catch (error) {
+  try {
+      // Check if req.user is defined and has a role property
+      const role = req.user && req.user.role ? req.user.role : 'default';
+
+      if (role === 'admin') {
+          const posts = await PostModel.find();
+
+          res.status(200).json({
+              success: true,
+              message: 'All posts retrieved successfully',
+              posts
+          });
+      } else {
+          res.status(403).json({
+              success: false,
+              message: 'Access denied. Only admins can retrieve all posts.'
+          });
+      }
+  } catch (error) {
       console.error('Error getting all posts:', error);
-      res.status(500).json({ success: false, message: 'Internal Server Error', error: error.message });
-    }
-  };
+      res.status(500).json({
+          success: false,
+          message: 'Internal Server Error',
+          error: error.message
+      });
+  }
+};
+
+
+
   
 //Read post By id
 const getPostById = async (req, res) => {
     try {
-      const postId = req.params.id;
+      const postId = req.params.postId;
   
       // Find post by ID
       const post = await PostModel.findById(postId);
@@ -200,40 +221,58 @@ const deletePost = async (req, res) => {
     }
 };
   
-//create a slug and retrieve a post by slug
-// const createSlug = async (req, res) => {
-//     const { slug } = req.params;
+//create a slug 
+const createSlug = async (req, res) => {
+  try {
+    const { title } = req.body;
 
-//     if (req.body.title) {
-//         req.body.slug = slugify(req.body.title, {
-//             replacement: '-',
-//             lower: true,
-//             remove: /[*+~.()'"!:@]/g,
-//         });
-//     }
-//     try {
-//         // If the request has a title, create a new post with the slug
-//         if (req.body.title) {
-//             const newPost = new PostModel(req.body);
-//             const savedPost = await newPost.save();
-//             return res.status(201).json({
-//                 success: true,
-//                 message: 'Post created successfully',
-//                 post: savedPost,
-//             });
-//         }
-//         const post = await PostModel.findOne({ slug }).select('-_id');
+    if (!title) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title is required',
+      });
+    }
 
-//         if (!post) {
-//             return res.status(404).json({ message: 'Post not found' });
-//         }
+    const slug = title.replace(/\s+/g, '-');
 
-//         res.json(post);
-//     } catch (error) {
-//         res.status(500).json({ message: error.message });
-//     }
-// };
-  
+    // If the request has a title, create a new post with the slug
+    if (slug) {
+      const newPostData = { ...req.body, slug };
+      const newPost = new PostModel(newPostData);
+
+      try {
+        const savedPost = await newPost.save();
+
+        return res.status(201).json({
+          success: true,
+          message: 'Post created and saved successfully',
+          post: savedPost,
+        });
+      } catch (saveError) {
+        console.error('Error saving post:', saveError);
+        return res.status(500).json({
+          success: false,
+          message: 'Error saving post',
+          error: saveError.message,
+        });
+      }
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid title',
+    });
+  } catch (error) {
+    console.error('Error creating post:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal Server Error',
+      error: error.message,
+    });
+  }
+};
+
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -241,5 +280,5 @@ module.exports = {
   getPostByslugOrId,
   updatePost,
   deletePost,
-  // createSlug 
+  createSlug 
 };
